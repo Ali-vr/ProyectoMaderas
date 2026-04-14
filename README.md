@@ -1,25 +1,27 @@
-# {nombre del proyecto}
+# {Pagina-Web-Maderas}
 
 **Descripción:**
-{breve explicación del proyecto}
+{El proyecto consiste en el desarrollo de una página web para un emprendimiento de venta de manualidades llamado “Hierro y Madera”, el cual se enfoca en la fabricación y comercialización de productos artesanales realizados principalmente con hierro y madera.
+
+Este tipo de productos combina resistencia (hierro) con estética y calidez (madera), lo que los hace muy atractivos para decoración del hogar y mobiliario . Además, son muy buscados porque permiten tener objetos únicos, personalizados y duraderos.}
 
 Integrantes:
 
-- {Apellido, Nombre} | [@username](https://github.com/username)
-- {Apellido, Nombre} | [@username](https://github.com/username)
-- {Apellido, Nombre} | [@username](https://github.com/username)
-- {Apellido, Nombre} | [@username](https://github.com/username)
+- {Vergara, Ali} | [@Ali-vr](https://github.com/Ali-vr)
+- {Luna, Santiago} | [@Lunape2](https://github.com/Lunape2)
+- {Giacomelli, Dylan} | [@GiacoD-07](https://github.com/GiacoD-07)
+- {Figueredo, Axel} | [@AxelFigueredo](https://github.com/AxelFigueredo)
 
 Proyecto institucional **E.E.S.T Nº4 de Berazategui**.
 
 ## Elevator's Pitch
 
-- Para {cliente objetivo}
-- Quienes {necesidad y/o oportunidad}
-- El {nombre del proyecto} es un {categoría del producto}
-- Que {beneficio clave, razón para comprarlo}
-- Diferente a {otras soluciones existentes, por ejemplo...}
-- Nuestro proyecto {declaración de la diferencia}.
+- Para {Para personas que buscan decoración única y muebles personalizados para el hogar}
+- Quienes {Quienes necesitan productos duraderos, estéticos y hechos a medida}
+- El {Hierro y Madera} es un {plataforma web de venta de manualidades artesanales}
+- Que {ofrece diseños exclusivos, personalizados y de alta calidad}
+- Diferente a {a tiendas tradicionales o productos industriales en masa}
+- Nuestro proyecto {brinda piezas únicas hechas artesanalmente, combinando diseño, funcionalidad y personalidad en cada producto}.
 
 ## Requisitos
 
