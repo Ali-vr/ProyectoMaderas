@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 class Database
 {
-  private const ALLOWED_DRIVERS = ['mysql', 'pgsql'];
+  private const ALLOWED_DRIVERS = ["mysql", "pgsql"];
 
   private string $driver;
   private string $host;
@@ -15,16 +15,18 @@ class Database
 
   public function __construct()
   {
-    $this->driver = $_ENV['DB_DRIVER'] ?? 'mysql';
+    $this->driver = $_ENV["DB_DRIVER"] ?? "mysql";
 
     if (!in_array($this->driver, self::ALLOWED_DRIVERS, true)) {
-      throw new \InvalidArgumentException("Driver de base de datos no soportado");
+      throw new InvalidArgumentException(
+        "Driver de base de datos no soportado",
+      );
     }
 
-    $this->host = $_ENV['DB_HOST'] ?? 'localhost';
-    $this->dbName = $_ENV['DB_NAME'] ?? 'slim_php';
-    $this->username = $_ENV['DB_USER'] ?? 'root';
-    $this->password = $_ENV['DB_PASS'] ?? 'root';
+    $this->host = $_ENV["DB_HOST"] ?? "localhost";
+    $this->dbName = $_ENV["DB_NAME"] ?? "slim_php";
+    $this->username = $_ENV["DB_USER"] ?? "root";
+    $this->password = $_ENV["DB_PASS"] ?? "root";
   }
 
   public function getConnection(): PDO
@@ -34,7 +36,7 @@ class Database
     }
 
     try {
-      $port = $_ENV['DB_PORT'] ?? ($this->driver === 'pgsql' ? '5432' : '3306');
+      $port = $_ENV["DB_PORT"] ?? ($this->driver === "pgsql" ? "5432" : "3306");
       $dsn = $this->buildDsn($port);
 
       $this->connection = new PDO($dsn, $this->username, $this->password, [
@@ -45,13 +47,47 @@ class Database
 
       return $this->connection;
     } catch (PDOException $e) {
-      throw new \Exception("Fallo en la conexión a la base de datos");
+      throw new RuntimeException(
+        "Fallo en la conexión a la base de datos",
+        0,
+        $e,
+      );
+    }
+  }
+
+  /**
+   * @param Closure(PDO): mixed $tr
+   */
+  public function runTransaction(Closure $tr): mixed
+  {
+    $conn = $this->getConnection();
+
+    if ($conn->inTransaction()) {
+      throw new RuntimeException(
+        "Las transacciones anidadas no están permitidas. No llames a runTransaction dentro de otra.",
+      );
+    }
+
+    try {
+      $conn->beginTransaction();
+
+      $result = $tr($conn);
+
+      $conn->commit();
+
+      return $result;
+    } catch (Throwable $e) {
+      if ($conn->inTransaction()) {
+        $conn->rollBack();
+      }
+
+      throw $e;
     }
   }
 
   private function buildDsn(string $port): string
   {
-    if ($this->driver === 'pgsql') {
+    if ($this->driver === "pgsql") {
       return "pgsql:host={$this->host};port={$port};dbname={$this->dbName}";
     }
 
