@@ -27,11 +27,38 @@ $renderer = new PhpRenderer(
   attributes: ["title" => "PDI | Slim Template 2026"],
 );
 
-// Ruta/Vista principal
-$app->get("/", function ($request, $response) use ($renderer) {
-  return view($renderer, $response, "index.php");
+// Ruta/Vista Listado
+$app->get("/productos", function ($request, $response) use ($renderer) {
+  return view($renderer, $response, "/productos/index.php");
+});  
+
+// Ruta/Vista Detalle 
+$app->get("/productos/{id}", function ($request, $response, $args) use ($renderer) {
+    $id = $args["id"];
+    
+
+    return view($renderer, $response, "/productos/show.php", [
+        "id" => $id
+    ]);
 });
+
+// Ruta/Vista Creacion
+$app->get("/create/productos", function ($request, $response) use ($renderer) {
+  return view($renderer, $response, "/productos/store.php");
+});
+
+
+
+/**
+ * GET /entidad -> Lista a todos los cosos de entidad
+ * GET /entidad/{id} -> Mostrar el detalle de un solo coso de entidad
+ * POST /entidad -> Crea un coso del tipo entidad
+ * PUT|PATCH /entidad/{id} -> Actualiza un coso del tipo entidad
+ * DELETE /entidad/{id} -> Borra un coso de entidad especifico
+ * composer run serve -> ejecuta el servidor
+ */
 
 $app->addErrorMiddleware($debug, true, true);
 
 return $app;
+
