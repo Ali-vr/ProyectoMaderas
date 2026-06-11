@@ -62,11 +62,13 @@ $app->post("/formulario/register", function ($request, $response) use ($renderer
     $nombre = $data['nombre'] ?? null;
     $precio = $data['precio'] ?? null;
     $descripcion = $data['descripcion'] ?? null;
+    $img = $data['img'] ?? null;
 
     return $renderer->render($response, "/formulario/logeado.php", [
         "nombre" => $nombre,
         "precio" => $precio,
         "descripcion" => $descripcion,
+        "img" => $img
     ]);
 });
 
