@@ -53,28 +53,23 @@ $app->get("/formulario/register", function ($request, $response) use ($renderer)
   return view($renderer, $response, "/formulario/register.php");
 });  
 
+
 $app->post("/formulario/register", function ($request, $response) use ($renderer) {
     
-    // getParsedBody()
-    $data = $request->getParsedBody();
 
-    // busco nombre y contraseña 
+    $data = $request->getParsedBody();
+  
     $nombre = $data['nombre'] ?? null;
     $precio = $data['precio'] ?? null;
     $descripcion = $data['descripcion'] ?? null;
-    //resultado
-    $resultado = [
-        "datos_recibidos" => [
-            "nombre" => $nombre,
-            "precio" => $precio,
-            "descripcion" => $descripcion,
-        ]
-    ];
 
-    //formato JSON 
-    $response->getBody()->write(json_encode($resultado));
-    return $response->withHeader('Content-Type', 'application/json');
+    return $renderer->render($response, "/formulario/logeado.php", [
+        "nombre" => $nombre,
+        "precio" => $precio,
+        "descripcion" => $descripcion,
+    ]);
 });
+
 
 
 /**
