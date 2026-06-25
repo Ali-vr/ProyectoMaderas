@@ -28,9 +28,27 @@ $renderer = new PhpRenderer(
 );
 
 // Ruta/Vista Listado
-$app->get("/productos", function ($request, $response) use ($renderer) {
-  return view($renderer, $response, "/productos/index.php");
-});  
+$app->get("/productos", function ($request, $response, $args) use ($renderer) {
+
+ $queryParams = $request->getQueryParams();
+
+    $productos = [
+        ["id" => 1, "name" => "Camiseta de futbol", "price" => 15000],
+        ["id" => 2, "name" => "Botines", "price" => 45000],
+        ["id" => 3, "name" => "Pelota", "price" => 2000],
+        ["id" => 4, "name" => "Canilleras", "price" => 5000]
+    ];
+
+if (isset($queryParams['limit'])) {
+        $limit = $queryParams['limit'];
+        $productos = array_slice($productos, 0, $limit);
+    }
+
+
+    return view($renderer, $response, "/productos/index.php", [
+        "productos" => $productos
+    ]);
+});
 
 // Ruta/Vista Detalle 
 $app->get("/productos/{id}", function ($request, $response, $args) use ($renderer) {
