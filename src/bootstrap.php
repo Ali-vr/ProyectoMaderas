@@ -1,47 +1,92 @@
 <?php
 
+declare(strict_types=1);
+
 use Slim\Factory\AppFactory;
 use Slim\Views\PhpRenderer;
 use Dotenv\Dotenv;
 
 require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/database/Database.php';
 
-// Cargar variables de entorno desde el .env
+/*
+|--------------------------------------------------------------------------
+| Variables de entorno
+|--------------------------------------------------------------------------
+*/
+
 Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
 
 $env = $_ENV["APP_ENV"] ?? "prod";
+
 $allowedEnvs = ["dev", "prod"];
 
 if (!in_array($env, $allowedEnvs, true)) {
-  throw new RuntimeException("APP_ENV inválido: $env");
+    throw new RuntimeException("APP_ENV inválido: $env");
 }
 
 $debug = $env === "dev";
 
-// Crear la aplicacion de Slim
+
+/*
+|--------------------------------------------------------------------------
+| Base de datos
+|--------------------------------------------------------------------------
+*/
+
+$database = new Database();
+
+
+/*
+|--------------------------------------------------------------------------
+| Crear aplicación Slim
+|--------------------------------------------------------------------------
+*/
+
 $app = AppFactory::create();
 
-// Crear el motor de plantillas
+
+/*
+|--------------------------------------------------------------------------
+| Motor de plantillas
+|--------------------------------------------------------------------------
+*/
+
 $renderer = new PhpRenderer(
-  templatePath: __DIR__ . "/views",
-  attributes: ["title" => "PDI | Slim Template 2026"],
+    templatePath: __DIR__ . "/views",
+    attributes: [
+        "title" => "PDI | Slim Template 2026"
+    ],
 );
-//conexion
-use PDO;
-use RuntimeException;
+
+
+/*
+|--------------------------------------------------------------------------
+| CRUD PRODUCTOS
+|--------------------------------------------------------------------------
+*/
+
+
+/*
+|--------------------------------------------------------------------------
+| GET /productos/
+|--------------------------------------------------------------------------
+| Lista todos los productos.
+*/
 
 $app->get("/productos/", function ($request, $response, $args) use ($renderer, $database) {
 
     // Obtenemos la conexión mediante PDO.
     $conn = $database->getConnection();
 
-    // Consultamos todos los productos de la base de datos.
+    // Consultamos todos los productos.
     $stmt = $conn->query(
         "SELECT id, nombre, precio, stock
          FROM productos
          ORDER BY id"
     );
 
+    // Obtenemos los resultados.
     $productos = $stmt->fetchAll();
 
     // Enviamos los productos a la vista.
@@ -53,70 +98,8 @@ $app->get("/productos/", function ($request, $response, $args) use ($renderer, $
             "productos" => $productos
         ]
     );
-})
-
-// Ruta/Vista Listado
-$app->get("/productos", function ($request, $response, $args) use ($renderer) {
-
- $queryParams = $request->getQueryParams();
-
-    $productos = [
-        ["id" => 1, "name" => "Camiseta de futbol", "price" => 15000],
-        ["id" => 2, "name" => "Botines", "price" => 45000],
-        ["id" => 3, "name" => "Pelota", "price" => 2000],
-        ["id" => 4, "name" => "Canilleras", "price" => 5000]
-    ];
-
-if (isset($queryParams['limit'])) {
-        $limit = $queryParams['limit'];
-        $productos = array_slice($productos, 0, $limit);
-    }
-
-
-    return view($renderer, $response, "/productos/index.php", [
-        "productos" => $productos
-    ]);
 });
 
-// Ruta/Vista Detalle 
-$app->get("/productos/{id}", function ($request, $response, $args) use ($renderer) {
-    $id = $args["id"];
-    
-
-    return view($renderer, $response, "/productos/show.php", [
-        "id" => $id
-    ]);
-});
-
-// Ruta/Vista Creacion
-$app->get("/create/productos", function ($request, $response) use ($renderer) {
-  return view($renderer, $response, "/productos/store.php");
-});
-
-// Ruta/formulario 
-
-$app->get("/formulario/register", function ($request, $response) use ($renderer) {
-  return view($renderer, $response, "/formulario/register.php");
-});  
-
-
-$app->post("/formulario/register", function ($request, $response) use ($renderer) {
-    
-
-    $data = $request->getParsedBody();
-  
-    $nombre = $data['nombre'] ?? null;
-    $precio = $data['precio'] ?? null;
-    $descripcion = $data['descripcion'] ?? null;
-    $img = $data['img'] ?? null;
-
-    return $renderer->render($response, "/formulario/logeado.php", [
-        "nombre" => $nombre,
-        "precio" => $precio,
-        "descripcion" => $descripcion,
-        "img" => $img
-    ]);
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -141,9 +124,8 @@ $app->get("/productos/create", function ($request, $response, $args) use ($rende
 |--------------------------------------------------------------------------
 | Crea un nuevo producto.
 |
-| IMPORTANTE:
 | La operación se realiza dentro de una transacción.
-| Si algo falla, runTransaction() hace rollback automáticamente.
+| Si algo falla, runTransaction() hace rollback.
 */
 
 $app->post("/productos", function ($request, $response, $args) use ($database) {
@@ -155,12 +137,15 @@ $app->post("/productos", function ($request, $response, $args) use ($database) {
     $precio = $data["precio"] ?? null;
     $stock = $data["stock"] ?? null;
 
-    return $database->runTransaction(
+    /*
+     * Ejecutamos el INSERT dentro de una transacción.
+     */
+    $database->runTransaction(
         function (PDO $conn) use ($nombre, $precio, $stock) {
 
             /*
-             * Validamos que todos los campos obligatorios
-             * hayan sido enviados.
+             * Verificamos que todos los campos
+             * obligatorios estén completos.
              */
             if ($nombre === "" || $precio === null || $stock === null) {
                 throw new RuntimeException(
@@ -169,7 +154,7 @@ $app->post("/productos", function ($request, $response, $args) use ($database) {
             }
 
             /*
-             * Validamos que precio y stock sean números.
+             * Verificamos que precio y stock sean números.
              */
             if (!is_numeric($precio) || !is_numeric($stock)) {
                 throw new RuntimeException(
@@ -178,7 +163,25 @@ $app->post("/productos", function ($request, $response, $args) use ($database) {
             }
 
             /*
-             * Insertamos el producto utilizando una consulta preparada.
+             * Verificamos que el precio no sea negativo.
+             */
+            if ((float) $precio < 0) {
+                throw new RuntimeException(
+                    "El precio no puede ser negativo."
+                );
+            }
+
+            /*
+             * Verificamos que el stock no sea negativo.
+             */
+            if ((int) $stock < 0) {
+                throw new RuntimeException(
+                    "El stock no puede ser negativo."
+                );
+            }
+
+            /*
+             * Insertamos el producto.
              */
             $stmt = $conn->prepare(
                 "INSERT INTO productos (nombre, precio, stock)
@@ -190,10 +193,15 @@ $app->post("/productos", function ($request, $response, $args) use ($database) {
                 ":precio" => $precio,
                 ":stock" => $stock
             ]);
-
-            return $stmt->rowCount();
         }
     );
+
+    /*
+     * Volvemos al listado.
+     */
+    return $response
+        ->withHeader("Location", "/productos/")
+        ->withStatus(302);
 });
 
 
@@ -210,8 +218,10 @@ $app->get("/productos/{id}", function ($request, $response, $args) use ($rendere
 
     $id = (int) $args["id"];
 
+    // Obtenemos la conexión.
     $conn = $database->getConnection();
 
+    // Buscamos el producto.
     $stmt = $conn->prepare(
         "SELECT id, nombre, precio, stock
          FROM productos
@@ -226,7 +236,7 @@ $app->get("/productos/{id}", function ($request, $response, $args) use ($rendere
 
     /*
      * Si no encontramos el producto,
-     * mostramos la vista de no encontrado.
+     * mostramos la vista correspondiente.
      */
     if (!$producto) {
         return view(
@@ -236,6 +246,7 @@ $app->get("/productos/{id}", function ($request, $response, $args) use ($rendere
         );
     }
 
+    // Mostramos el producto.
     return view(
         $renderer,
         $response,
@@ -251,15 +262,17 @@ $app->get("/productos/{id}", function ($request, $response, $args) use ($rendere
 |--------------------------------------------------------------------------
 | GET /productos/update/{id}
 |--------------------------------------------------------------------------
-| Muestra el formulario para editar un producto existente.
+| Muestra el formulario para editar un producto.
 */
 
 $app->get("/productos/update/{id}", function ($request, $response, $args) use ($renderer, $database) {
 
     $id = (int) $args["id"];
 
+    // Obtenemos la conexión.
     $conn = $database->getConnection();
 
+    // Buscamos el producto.
     $stmt = $conn->prepare(
         "SELECT id, nombre, precio, stock
          FROM productos
@@ -273,8 +286,7 @@ $app->get("/productos/update/{id}", function ($request, $response, $args) use ($
     $producto = $stmt->fetch();
 
     /*
-     * Si el producto no existe,
-     * mostramos la vista correspondiente.
+     * Si no existe, mostramos not_found.php.
      */
     if (!$producto) {
         return view(
@@ -284,6 +296,7 @@ $app->get("/productos/update/{id}", function ($request, $response, $args) use ($
         );
     }
 
+    // Mostramos el formulario de edicion.
     return view(
         $renderer,
         $response,
@@ -315,11 +328,14 @@ $app->put("/productos/{id}", function ($request, $response, $args) use ($databas
     $precio = $data["precio"] ?? null;
     $stock = $data["stock"] ?? null;
 
-    return $database->runTransaction(
+    /*
+     * Ejecutamos el UPDATE dentro de una transaccion.
+     */
+    $database->runTransaction(
         function (PDO $conn) use ($id, $nombre, $precio, $stock) {
 
             /*
-             * Verificamos que todos los campos obligatorios
+             * Verificamos que todos los campos
              * estén completos.
              */
             if ($nombre === "" || $precio === null || $stock === null) {
@@ -329,7 +345,7 @@ $app->put("/productos/{id}", function ($request, $response, $args) use ($databas
             }
 
             /*
-             * Verificamos que precio y stock sean números.
+             * Verificamos que precio y stock sean numeros.
              */
             if (!is_numeric($precio) || !is_numeric($stock)) {
                 throw new RuntimeException(
@@ -338,7 +354,26 @@ $app->put("/productos/{id}", function ($request, $response, $args) use ($databas
             }
 
             /*
-             * Verificamos que el producto exista.
+             * Verificamos que el precio no sea negativo.
+             */
+            if ((float) $precio < 0) {
+                throw new RuntimeException(
+                    "El precio no puede ser negativo."
+                );
+            }
+
+            /*
+             * Verificamos que el stock no sea negativo.
+             */
+            if ((int) $stock < 0) {
+                throw new RuntimeException(
+                    "El stock no puede ser negativo."
+                );
+            }
+
+            /*
+             * Verificamos que el producto exista
+             * antes de actualizarlo.
              */
             $check = $conn->prepare(
                 "SELECT id
@@ -373,10 +408,15 @@ $app->put("/productos/{id}", function ($request, $response, $args) use ($databas
                 ":stock" => $stock,
                 ":id" => $id
             ]);
-
-            return $stmt->rowCount();
         }
     );
+
+    /*
+     * Volvemos al listado.
+     */
+    return $response
+        ->withHeader("Location", "/productos/")
+        ->withStatus(302);
 });
 
 
@@ -393,30 +433,14 @@ $app->delete("/productos/{id}", function ($request, $response, $args) use ($data
 
     $id = (int) $args["id"];
 
-    return $database->runTransaction(
+    /*
+     * Ejecutamos el DELETE dentro de una transacción.
+     */
+    $database->runTransaction(
         function (PDO $conn) use ($id) {
 
             /*
-             * Verificamos que el producto exista.
-             */
-            $check = $conn->prepare(
-                "SELECT id
-                 FROM productos
-                 WHERE id = :id"
-            );
-
-            $check->execute([
-                ":id" => $id
-            ]);
-
-            if (!$check->fetch()) {
-                throw new RuntimeException(
-                    "El producto no existe."
-                );
-            }
-
-            /*
-             * Eliminamos el producto.
+             * Eliminamos directamente el producto.
              */
             $stmt = $conn->prepare(
                 "DELETE FROM productos
@@ -426,23 +450,16 @@ $app->delete("/productos/{id}", function ($request, $response, $args) use ($data
             $stmt->execute([
                 ":id" => $id
             ]);
-
-            return $stmt->rowCount();
         }
     );
+
+
+    return $response
+        ->withHeader("Location", "/productos/")
+        ->withStatus(302);
 });
 
-
-/**
- * GET /entidad -> Lista a todos los cosos de entidad
- * GET /entidad/{id} -> Mostrar el detalle de un solo coso de entidad
- * POST /entidad -> Crea un coso del tipo entidad
- * PUT|PATCH /entidad/{id} -> Actualiza un coso del tipo entidad
- * DELETE /entidad/{id} -> Borra un coso de entidad especifico
- * composer run serve -> ejecuta el servidor
- */
 
 $app->addErrorMiddleware($debug, true, true);
 
 return $app;
-
