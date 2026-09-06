@@ -1,108 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Crear producto</title>
-
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
-
+    <title>Crear Producto</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; background: #f5f5f5; color: #222; }
+        .card { max-width: 600px; margin: 0 auto; background: #fff; border: 1px solid #ddd; padding: 24px; border-radius: 8px; }
+        .field { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input { width: 100%; padding: 10px; box-sizing: border-box; }
+        .actions { display: flex; gap: 10px; margin-top: 18px; }
+        .btn { display: inline-block; padding: 10px 14px; border-radius: 6px; text-decoration: none; color: #fff; background: #0d6efd; border: none; cursor: pointer; }
+        .btn-secondary { background: #6c757d; }
+    </style>
 </head>
-
 <body>
-
-<div class="container mt-5">
-
     <div class="card">
+        <h1>Crear nuevo producto</h1>
 
-        <div class="card-header">
-            <h1 class="h3 mb-0">Crear producto</h1>
-        </div>
+        <form action="/productos" method="POST">
+            <div class="field">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" name="nombre" maxlength="100" required>
+            </div>
 
-        <div class="card-body">
+            <div class="field">
+                <label for="precio">Precio</label>
+                <input type="number" id="precio" name="precio" step="0.01" min="0" required>
+            </div>
 
-            <form action="/productos" method="POST">
+            <div class="field">
+                <label for="stock">Stock</label>
+                <input type="number" id="stock" name="stock" min="0" required>
+            </div>
 
-                <div class="mb-3">
-
-                    <label for="nombre" class="form-label">
-                        Nombre
-                    </label>
-
-                    <input
-                        type="text"
-                        class="form-control"
-                        id="nombre"
-                        name="nombre"
-                        maxlength="100"
-                        required
-                    >
-
-                </div>
-
-                <div class="mb-3">
-
-                    <label for="precio" class="form-label">
-                        Precio
-                    </label>
-
-                    <input
-                        type="number"
-                        class="form-control"
-                        id="precio"
-                        name="precio"
-                        min="0"
-                        step="0.01"
-                        required
-                    >
-
-                </div>
-
-                <div class="mb-3">
-
-                    <label for="stock" class="form-label">
-                        Stock
-                    </label>
-
-                    <input
-                        type="number"
-                        class="form-control"
-                        id="stock"
-                        name="stock"
-                        min="0"
-                        required
-                    >
-
-                </div>
-
-                <button
-                    type="submit"
-                    class="btn btn-primary"
-                >
-                    Guardar producto
-                </button>
-
-                <a
-                    href="/productos/"
-                    class="btn btn-secondary"
-                >
-                    Cancelar
-                </a>
-
-            </form>
-
-        </div>
-
+            <div class="actions">
+                <button class="btn" type="submit">Guardar producto</button>
+                <a class="btn btn-secondary" href="/productos">Cancelar</a>
+            </div>
+        </form>
     </div>
-
-</div>
-
 </body>
-
 </html>
